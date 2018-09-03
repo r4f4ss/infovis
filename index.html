@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Doenças</title>
+
+<head>
+	<link rel="stylesheet" href="css/d3.parsets.css">
+	<link rel="stylesheet" href="css/modal.css">
+</head>
+
+<body>
+
+	<div id="myModal" class="modal">
+		  <div class="modal-content">
+		    <div class="modal-header">
+		      <span class="close">&times;</span>
+		       <form>
+				  <input id="r_sexo" type="radio" name="column" onclick="radioClick(value)" value="SEXO" checked> SEXO
+				  <input id="r_racacor" type="radio" name="column" onclick="radioClick(value)" value="RACACOR"> RACACOR
+				  <input id="r_estciv" type="radio" name="column" onclick="radioClick(value)" value="ESTCIV"> ESTCIV
+				  <input id="r_esc" type="radio" name="column" onclick="radioClick(value)" value="ESC"> ESC
+				</form> 
+		    </div>
+		   	<div id="vis"><noscript><img src="parsets.png"></noscript></div>
+		  </div>
+	</div>
+
+	<div>
+  		<div id="graphic"></div>
+	</div>
+	
+  <svg width="960" height="100"></svg>
+
+
+</body>
+
+
+<script src="js/d3.min.js"></script>
+<script src="js/d3.parsets.js"></script>
+<script src="js/graf_barras_parallel.js"></script>
+<script src="js/graf_area.js"></script>
+
+<script>
+var modal = document.getElementById('myModal');
+modal.style.display = "none";
+
+var atributos=["SEXO", "RACACOR", "ESTCIV", "ESC"];
+var temp=[];
+
+var nomeGlobal="";
+
+function radioClick(valor){
+
+	temp=[];
+	temp[0]=valor;
+	let k=1;
+	for(var i=0;i<atributos.length;i++){
+		if(atributos[i]!=valor){
+			temp[k]=atributos[i];
+			k++;
+		}
+	}
+	atributos=temp;
+
+	remove_plot();
+	plot_parallel(nomeGlobal);
+
+}
+				
+</script>
