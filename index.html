@@ -5,10 +5,49 @@
 <head>
 	<link rel="stylesheet" href="css/d3.parsets.css">
 	<link rel="stylesheet" href="css/modal.css">
+	<!--<link rel="stylesheet" href="css/area.css">-->
+	<!--<link rel="stylesheet" href="css/bootstrap.css">-->
+	<style>
+	.axis { font: 11px sans-serif; }
+</style>
+
+
 </head>
 
 <body>
 
+	<h1>Origem dos Dados</h1>
+	<p>Os dados serão retirados do portal de dados de sistemas do <a href="http://www2.datasus.gov.br/DATASUS/index.php?area=0901">SUS</a>. Em particular os dados do sistema SIM (sistema de informação mortalidade) e apenas do estado do Rio de Janeiro entre os anos de 2010 e 2015. Estes dados possuem todos os registros de mortalidde registrados pelo SUS no país.</p>
+	<h1>Tratamento e Extração dos Dados</h1>
+	<ol>
+	<li>Converter as tablas de mortalidade SIM do seu formato original DBC para DBF, usando o programa oferecido pelo DATASUS <a href="http://www2.datasus.gov.br/DATASUS/index.php?area=060805">TabWin</a>.
+	</li>
+	<li>Converter as tabelas no formado DBF para o formato CSV com o script em python <a href="https://gist.github.com/bertspaan/8220892">dbf2dbc.py</a>.
+	</li>
+	<li>Para cada arquivo CSV, executar o script acrescentaQuartoAno.py que calcula e acrescenta o campo ANOQUARTO que representa o quarto do ano no qual a morte ocorreu, este campo serve como eixo horizontal para o gráfico de área.
+	</li>
+	<li>Para gerar a collection no MongoDB agregada, ou seja, que possui todos os registros de mortalidade no intervalo 2010-2015, pode-se importar os arquivos CSV com as tabelas dos respectivos anos sem o parâmetro de excluir a tabela existente (--drop), dessa forma o Mongo vai concatenando os dados e o resultado é uma collection final com toos os dados de todos os arquivos:
+<code>$mongoimport --type csv -d datavis -c sim --headerline DORJ2010.csv </code>
+...
+<code>$mongoimport --type csv -d datavis -c sim --headerline DORJ2015.csv </code>
+	</li>
+	<li>Executa o script ordenaCausasMortes.py que executa um pipeline de tratamento de dados do MongoDB criando a collection sim_orderByCAUSABAS, que possui a contagem do campo CAUSABAS (causa de morte) ordenado em ordem decrescente. Esses dados são usados para fazer o gáfico de barras na horizontal.
+	</li>
+	<li>Executa o script extraiParallel.py para  cada causa de morte que deve ter uma visualizaçãod e parallel sets, de modo a obter um arquivo com as mortes e os atributos SEXO, RACACOR, ESTCIV e ESC.
+	</li>
+	<li>Exportar a collection do mongo, com os atributos do parallel sets para um arquivo CSV a ser usado na visualizaçao, que deve ser feito com o comando:
+<code>$mongoexport -d datavis -c sim_I219 --type csv -f "SEXO,RACACOR,ESTCIV,ESC" -o sim_I219.csv</code>
+Este passo deve ser feito para cada causa de morte que constam em uma das barras do gráfico de barras.
+	</li>
+	<li>Executa o script parseAttsParallel.py que substitui os valores pelos respectivos atributos de ESC, SEXO, RACACOR e ESTCIV nos arquivos destinados ao parallel sets. Deve ser faito para cada arquivo em separado.
+	</li>
+	<li>Executa o script ordenaQuartoAno.py para cada doença, ele ordena e faz a agregação da quantidade de casos de doença ao longo dos quartos de ano, necessário para fazer o gráfico de área.
+	</li>
+	</ol>
+	<h1>Maiores causas de morte no estado do Rio de Janeiro</h1>
+	<p>Abaixo um gráfico de barras mostra as maiores causas de morte no estado do rio de janeiro considerando os anos de 2010 até 2015. A quantidade total de mortalidades é escrita a direita da sua respectiva barra.</p>
+	<p>O gráfico é interativo, ao se clicar em uma das barras uma visualização parallel sets é mostrada contendo informações sobre a incidência da respectiva causa de morte em relação aos atributos sexo, raça/cor, estado civil e escolaridade.</p>
+	<p><b>OBS:</b>Casos sem relevância para a visualização como "Desconhecido" ou "Ignorado" foram retirados.</p>
 	<div id="myModal" class="modal">
 		  <div class="modal-content">
 		    <div class="modal-header">
@@ -27,7 +66,8 @@
 	<div>
   		<div id="graphic"></div>
 	</div>
-	
+	<h1>Evolução das Maiores Causas de Mortes no Estado do Rio de Janeiro</h1>
+	<p>O gráfico de área abaixo mostra a evolução das quantidaes das causas de mortes relatadas acima, que foram as maiores no préiodo de 2010-2015. A unidade de tempo usada foi um quarto de ano(3 meses).</p>
   <svg width="960" height="100"></svg>
 
 
@@ -36,6 +76,8 @@
 
 <script src="js/d3.min.js"></script>
 <script src="js/d3.parsets.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/bootstrap.js"></script>
 <script src="js/graf_barras_parallel.js"></script>
 <script src="js/graf_area.js"></script>
 
